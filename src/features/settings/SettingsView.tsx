@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 import { exportAllUserDataAsJson, deleteAllUserData, invitationRepo } from '@/repositories';
 import {
   User,
@@ -27,6 +28,28 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Invitation } from '@/types';
+
+// Mini toggle switch cohérent avec le design system
+const ToggleSwitch: React.FC<{ checked: boolean; onChange: (v: boolean) => void; id?: string }> = ({ checked, onChange, id }) => (
+  <button
+    type="button"
+    role="switch"
+    id={id}
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className={clsx(
+      'relative w-10 h-5.5 w-[40px] h-[22px] rounded-full transition-colors duration-200 ease-in-out flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2',
+      checked ? 'bg-indigo-500' : 'bg-[#D1D5DB] dark:bg-[#374151]'
+    )}
+  >
+    <span
+      className={clsx(
+        'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out',
+        checked ? 'translate-x-[18px]' : 'translate-x-0'
+      )}
+    />
+  </button>
+);
 
 export const SettingsView: React.FC = () => {
   const { currentUser, logout } = useAuth();
@@ -88,15 +111,12 @@ export const SettingsView: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
   const handleDeleteAccount = async () => {
     if (!currentUser) return;
-    const confirmation = prompt(
-      'Cette action est irréversible. Pour supprimer définitivement votre compte et vos données, tapez SUPPRIMER :'
-    );
-    if (confirmation === 'SUPPRIMER') {
-      await deleteAllUserData(currentUser.id);
-      logout();
-    }
+    await deleteAllUserData(currentUser.id);
+    logout();
   };
 
   return (
@@ -226,29 +246,24 @@ export const SettingsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="space-y-2.5 text-xs">
+        <div className="space-y-1 text-sm">
           {[
-            { label: FR.settings.rappelCours, val: rappelCours, set: setRappelCours },
-            { label: FR.settings.rappelPointage, val: rappelPointage, set: setRappelPointage },
-            { label: FR.settings.seanceModifiee, val: seanceModifiee, set: setSeanceModifiee },
-            { label: FR.settings.edtManquant, val: edtManquant, set: setEdtManquant },
-            { label: FR.settings.rappelDevoir, val: rappelDevoir, set: setRappelDevoir },
-            { label: FR.settings.rappelExamen, val: rappelExamen, set: setRappelExamen },
-          ].map((item, idx) => (
-            <label
-              key={idx}
-              className="flex items-center justify-between p-2.5 rounded-btn bg-[#F7F8FA] dark:bg-[#0E1014] border border-[#E5E7EB] dark:border-[#262B35] cursor-pointer"
+            { label: FR.settings.rappelCours, val: rappelCours, set: setRappelCours, id: 'notif-cours' },
+            { label: FR.settings.rappelPointage, val: rappelPointage, set: setRappelPointage, id: 'notif-pointage' },
+            { label: FR.settings.seanceModifiee, val: seanceModifiee, set: setSeanceModifiee, id: 'notif-seance' },
+            { label: FR.settings.edtManquant, val: edtManquant, set: setEdtManquant, id: 'notif-edt' },
+            { label: FR.settings.rappelDevoir, val: rappelDevoir, set: setRappelDevoir, id: 'notif-devoir' },
+            { label: FR.settings.rappelExamen, val: rappelExamen, set: setRappelExamen, id: 'notif-examen' },
+          ].map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between py-2.5 border-b border-[#E5E7EB] dark:border-[#262B35] last:border-0"
             >
-              <span className="text-[#111827] dark:text-[#F3F4F6] font-medium pr-3">
+              <label htmlFor={item.id} className="text-sm text-[#111827] dark:text-[#F3F4F6] font-medium cursor-pointer pr-4 flex-1">
                 {item.label}
-              </span>
-              <input
-                type="checkbox"
-                checked={item.val}
-                onChange={e => item.set(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
-              />
-            </label>
+              </label>
+              <ToggleSwitch id={item.id} checked={item.val} onChange={item.set} />
+            </div>
           ))}
         </div>
 
@@ -334,13 +349,42 @@ export const SettingsView: React.FC = () => {
           <Button
             variant="danger"
             icon={<Trash2 className="w-4 h-4" />}
-            onClick={handleDeleteAccount}
+            onClick={() => setConfirmDeleteOpen(true)}
             className="text-xs"
           >
             {FR.settings.supprimerCompte}
           </Button>
         </div>
       </Card>
+
+      {/* Confirmation suppression compte */}
+      <BottomSheet
+        isOpen={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        title="Supprimer le compte"
+      >
+        <div className="space-y-4 py-2">
+          <div className="flex items-start gap-3 p-3 rounded-[var(--elizo-radius-btn)] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/30">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-red-800 dark:text-red-300">
+              <p className="font-semibold">Cette action est irréversible.</p>
+              <p className="text-xs mt-1 text-red-700 dark:text-red-400">Toutes tes données (EDT, présences, notes, devoirs, révisions, clubs) seront définitivement supprimées.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" fullWidth onClick={() => setConfirmDeleteOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              fullWidth
+              onClick={() => { setConfirmDeleteOpen(false); handleDeleteAccount(); }}
+            >
+              Supprimer définitivement
+            </Button>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 };

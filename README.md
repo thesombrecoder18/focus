@@ -3,8 +3,8 @@
 > Ton cockpit d'étudiant du soir. — Application mobile first pour pilotage des études du soir (emploi du temps variable, présence, devoirs, examens, calendrier, clubs, révisions).
 
 **Propriétaire** : thesombrecoder18 — Utilisateur principal : Baye Eli (M2 SSI, ESP Dakar)  
-**Version** : 1.0.0 (MVP — Phase 1 livrée)  
-**Statut** : Actif · 50 % · Cible déploiement Vercel / PWA
+**Version** : 1.1.0 (Phase 2 en cours)  
+**Statut** : Actif · 55 % · Cible déploiement Vercel / PWA
 
 ---
 
@@ -99,8 +99,8 @@ src/
 | Version | Contenu |
 |---------|---------|
 | **MVP (V1.0)** | Auth, thèmes, PWA, Aujourd'hui, Études (semestres, matières, EDT variable, devoirs, examens), import Excel/CSV, pointage, Calendrier, notifications e-mail |
-| **V1.1** | Notes & moyennes, import IA (PDF/photo/texte/ICS), export .ics, relevé de présence, Clubs complets, Révisions |
-| **V1.2** | Journal, notifications push, résumé hebdomadaire |
+| **V1.1** | Notes & moyennes, export .ics, import .ics, relevé de présence, Clubs complets, Révisions |
+| **V1.2** | Journal, notifications push, résumé hebdomadaire, import IA (PDF/photo/texte via backend) |
 | **V2** | Offline total, connexion Google, verrouillage Journal, version anglaise, multi-utilisateurs |
 
 ---

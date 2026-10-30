@@ -5,6 +5,7 @@ import { APP_CONFIG } from '@/config/app';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { Eye, EyeOff, Lock, Mail, User, KeyRound, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export const AuthScreen: React.FC = () => {
@@ -76,14 +77,14 @@ export const AuthScreen: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-8 bg-[#F7F8FA] dark:bg-[#0E1014]">
       {/* Brand Header */}
-      <div className="text-center mb-6">
-        <div className="w-14 h-14 rounded-2xl bg-[#4F46E5] text-white flex items-center justify-center font-bold text-2xl shadow-md mx-auto mb-3">
-          E
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <AppLogo size={56} />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] dark:text-[#F3F4F6] tracking-tight">
+        <h1 className="text-2xl font-extrabold text-[#111827] dark:text-[#F3F4F6] tracking-tight">
           {APP_CONFIG.name}
         </h1>
-        <p className="text-xs sm:text-sm text-[#6B7280] dark:text-[#9CA3AF] mt-1 font-medium">
+        <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF] mt-1">
           {APP_CONFIG.baseline}
         </p>
       </div>
@@ -99,7 +100,7 @@ export const AuthScreen: React.FC = () => {
           </h2>
           {mode === 'inscription' && (
             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
-              {FR.auth.sousTitreInscription} (ex. {APP_CONFIG.defaultInviteCode})
+              {FR.auth.sousTitreInscription}
             </p>
           )}
         </div>

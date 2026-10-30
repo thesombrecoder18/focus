@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/Button';
 import { FR } from '@/i18n/fr';
 import { useData } from '@/context/DataContext';
 import { parseScheduleFile, ParseResult, downloadElizoExcelTemplate } from '@/lib/excel';
-import { parseWithGeminiOrFallback, parseIcsContent } from '@/lib/gemini';
-import { Upload, FileText, Download, AlertCircle, Camera, FileCode, Sparkles } from 'lucide-react';
+import { parseIcsContent } from '@/lib/icsImport';
+import { Upload, FileText, Download, AlertCircle, FileCode } from 'lucide-react';
 import { clsx } from 'clsx';
 
-type ImportTab = 'excel' | 'ia_file' | 'ia_text' | 'ics';
+type ImportTab = 'excel' | 'ics';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -24,12 +24,8 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
   const [adjustSemester, setAdjustSemester] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Text input state
-  const [pastedText, setPastedText] = useState('');
-
   // Refs
   const excelFileRef = useRef<HTMLInputElement>(null);
-  const mediaFileRef = useRef<HTMLInputElement>(null);
   const icsFileRef = useRef<HTMLInputElement>(null);
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,71 +49,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
     } catch (err) {
       console.error(err);
       setError(FR.errors.fichierInvalide);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64Data = (reader.result as string).split(',')[1];
-        const result = await parseWithGeminiOrFallback(
-          {
-            fileBase64: base64Data,
-            mimeType: file.type || 'application/pdf',
-            fileName: file.name,
-          },
-          matieres,
-          currentWeekMonday
-        );
-        setParseResult(result);
-        if (activeSemestre && result.semaineLundi < activeSemestre.debut) {
-          setAdjustSemester(true);
-        }
-        setIsLoading(false);
-      };
-      reader.onerror = () => {
-        setError('Erreur lors de la lecture du fichier.');
-        setIsLoading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error(err);
-      setError('Erreur lors de l\'analyse par l\'IA.');
-      setIsLoading(false);
-    }
-  };
-
-  const handleTextSubmit = async () => {
-    if (!pastedText.trim()) {
-      setError('Veuillez coller le texte de votre emploi du temps.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await parseWithGeminiOrFallback(
-        { text: pastedText.trim(), fileName: 'Message texte' },
-        matieres,
-        currentWeekMonday
-      );
-      setParseResult(result);
-      if (activeSemestre && result.semaineLundi < activeSemestre.debut) {
-        setAdjustSemester(true);
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Impossible d\'extraire les séances du texte.');
     } finally {
       setIsLoading(false);
     }
@@ -163,9 +94,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
   const handleCancelReview = () => {
     setParseResult(null);
     if (excelFileRef.current) excelFileRef.current.value = '';
-    if (mediaFileRef.current) mediaFileRef.current.value = '';
     if (icsFileRef.current) icsFileRef.current.value = '';
-    setPastedText('');
   };
 
   const handleEditRowField = (tempId: string, field: 'matiereIntitule' | 'intervenant' | 'salle' | 'debut' | 'fin', val: string) => {
@@ -191,7 +120,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
       {!parseResult ? (
         <div className="space-y-4">
           {/* Subheader tabs */}
-          <div className="grid grid-cols-4 gap-1 p-1 bg-[#F7F8FA] dark:bg-[#0E1014] rounded-btn text-xs font-semibold">
+          <div className="grid grid-cols-2 gap-1 p-1 bg-[#F7F8FA] dark:bg-[#0E1014] rounded-btn text-xs font-semibold">
             <button
               type="button"
               onClick={() => setActiveTab('excel')}
@@ -201,26 +130,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
               )}
             >
               Excel / CSV
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('ia_file')}
-              className={clsx(
-                "py-2 rounded-lg transition-colors truncate px-1",
-                activeTab === 'ia_file' ? "bg-white dark:bg-[#161A21] text-indigo-600 dark:text-indigo-400 shadow-xs" : "text-[#6B7280]"
-              )}
-            >
-              PDF / Photo
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('ia_text')}
-              className={clsx(
-                "py-2 rounded-lg transition-colors truncate px-1",
-                activeTab === 'ia_text' ? "bg-white dark:bg-[#161A21] text-indigo-600 dark:text-indigo-400 shadow-xs" : "text-[#6B7280]"
-              )}
-            >
-              Texte collé
             </button>
             <button
               type="button"
@@ -294,65 +203,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
             </div>
           )}
 
-          {/* Tab 2: PDF ou Photo par IA */}
-          {activeTab === 'ia_file' && (
-            <div className="space-y-4">
-              <div className="p-3.5 rounded-btn bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 text-xs text-[#111827] dark:text-[#F3F4F6] flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-                <span>Reconnaissance multimodale par IA Gemini (extrait les cours à partir d'une photo ou d'un PDF).</span>
-              </div>
-
-              <div
-                onClick={() => mediaFileRef.current?.click()}
-                className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#E5E7EB] dark:border-[#262B35] hover:border-indigo-500 rounded-card cursor-pointer bg-[#F7F8FA] dark:bg-[#0E1014]/50 transition-colors"
-              >
-                <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
-                  <Camera className="w-6 h-6" />
-                </div>
-                <p className="text-sm font-semibold text-[#111827] dark:text-[#F3F4F6] text-center">
-                  {isLoading ? "Analyse par l'IA en cours..." : "Choisir une photo ou un fichier PDF"}
-                </p>
-                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-1 text-center">
-                  PNG, JPG, WebP ou PDF (max 10 Mo)
-                </p>
-                <input
-                  ref={mediaFileRef}
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={handleMediaUpload}
-                  className="hidden"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Tab 3: Texte collé */}
-          {activeTab === 'ia_text' && (
-            <div className="space-y-3">
-              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                Colle directement le texte reçu sur WhatsApp ou par e-mail avec les cours et horaires de la semaine.
-              </p>
-              <textarea
-                rows={6}
-                value={pastedText}
-                onChange={e => setPastedText(e.target.value)}
-                placeholder="Ex. Lundi 17h00 - 19h00 Cybercriminalité M. Fall (en ligne)..."
-                className="w-full p-3.5 rounded-btn bg-white dark:bg-[#161A21] border border-[#E5E7EB] dark:border-[#262B35] text-xs font-mono text-[#111827] dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              />
-              <Button
-                type="button"
-                fullWidth
-                size="lg"
-                disabled={isLoading}
-                icon={<Sparkles className="w-4 h-4" />}
-                onClick={handleTextSubmit}
-              >
-                {isLoading ? "Extraction en cours..." : "Analyser le texte"}
-              </Button>
-            </div>
-          )}
-
-          {/* Tab 4: Fichier .ICS */}
+          {/* Tab 2: Fichier .ICS */}
           {activeTab === 'ics' && (
             <div className="space-y-4">
               <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">

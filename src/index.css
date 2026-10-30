@@ -115,3 +115,45 @@
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #64748B;
 }
+
+/* ─── Prévention zoom iOS sur les inputs (font-size < 16px) ─── */
+/* iOS Safari zoome automatiquement si font-size < 16px sur les inputs */
+@supports (-webkit-touch-callout: none) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="time"],
+  input[type="date"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* ─── Touch target minimum 44px ─── */
+/* Garantit une zone de touch WCAG 2.2 SC 2.5.5 */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ─── Transitions globales cohérentes ─── */
+*, *::before, *::after {
+  /* Les transitions longues se font via les classes Tailwind */
+}
+
+/* ─── Focus visible global élégant ─── */
+:focus-visible {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.dark :focus-visible {
+  outline-color: #818CF8;
+}

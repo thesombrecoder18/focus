@@ -534,62 +534,7 @@ export function seedDemoDataForUser(userId: string): void {
     },
   ];
 
-  // 8. Club démo "Com Soc"
-  const clubId = `club_${userId}_comsoc`;
-  const clubs: Club[] = [
-    {
-      id: clubId,
-      userId,
-      nom: 'Com Soc',
-      role: 'Membre',
-      couleur: '#7C3AED',
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
-
-  const reunionsClub: ReunionClub[] = [
-    {
-      id: `reunion_${userId}_1`,
-      userId,
-      clubId,
-      titre: 'Réunion Hebdomadaire Com Soc',
-      date: '2026-10-30T16:00',
-      lieu: 'Foyer des étudiants ESP',
-      recurrence: 'hebdomadaire',
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
-
-  const tachesClub: TacheClub[] = [
-    {
-      id: `tache_${userId}_1`,
-      userId,
-      clubId,
-      titre: 'Préparer l\'ordre du jour de la réunion du vendredi',
-      echeance: '2026-10-29T18:00',
-      statut: 'ouverte',
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
-
-  const contactsClub: ContactClub[] = [
-    {
-      id: `contact_${userId}_1`,
-      userId,
-      clubId,
-      nom: 'Mamadou Diallo',
-      role: 'Président Com Soc',
-      telephone: '+221771234567',
-      email: 'contact@comsoc.esp.sn',
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
-
-  // 9. Session de révision démo
+  // 8. Session de révision démo
   const revisions: SessionRevision[] = [
     {
       id: `rev_${userId}_1`,
@@ -630,18 +575,6 @@ export function seedDemoDataForUser(userId: string): void {
   const existingEvals = getItem<Evaluation[]>(STORAGE_KEYS.EVALUATIONS, []).filter(e => e.userId !== userId);
   setItem(STORAGE_KEYS.EVALUATIONS, [...existingEvals, ...evaluations]);
 
-  const existingClubs = getItem<Club[]>(STORAGE_KEYS.CLUBS, []).filter(c => c.userId !== userId);
-  setItem(STORAGE_KEYS.CLUBS, [...existingClubs, ...clubs]);
-
-  const existingReunions = getItem<ReunionClub[]>(STORAGE_KEYS.REUNIONS_CLUB, []).filter(r => r.userId !== userId);
-  setItem(STORAGE_KEYS.REUNIONS_CLUB, [...existingReunions, ...reunionsClub]);
-
-  const existingTaches = getItem<TacheClub[]>(STORAGE_KEYS.TACHES_CLUB, []).filter(t => t.userId !== userId);
-  setItem(STORAGE_KEYS.TACHES_CLUB, [...existingTaches, ...tachesClub]);
-
-  const existingContacts = getItem<ContactClub[]>(STORAGE_KEYS.CONTACTS_CLUB, []).filter(c => c.userId !== userId);
-  setItem(STORAGE_KEYS.CONTACTS_CLUB, [...existingContacts, ...contactsClub]);
-
   const existingRevs = getItem<SessionRevision[]>(STORAGE_KEYS.REVISIONS, []).filter(r => r.userId !== userId);
   setItem(STORAGE_KEYS.REVISIONS, [...existingRevs, ...revisions]);
 
@@ -650,7 +583,7 @@ export function seedDemoDataForUser(userId: string): void {
     id: `settings_${userId}`,
     userId,
     plageDisponibilite: { debut: '08:00', fin: '22:00' },
-    consentementIA: true,
+    consentementIA: false,
     notifications: {
       rappelCours: true,
       rappelPointage: true,
@@ -1078,7 +1011,7 @@ export class SettingsRepository implements ISettingsRepository {
       id: generateId(),
       userId,
       plageDisponibilite: { debut: '08:00', fin: '22:00' },
-      consentementIA: true,
+      consentementIA: false,
       notifications: {
         rappelCours: true,
         rappelPointage: true,
@@ -1198,8 +1131,23 @@ export class EvaluationRepository implements IEvaluationRepository {
 
 export class ClubRepository implements IClubRepository {
   async getAll(userId: string): Promise<Club[]> {
+    const legacyDemoClubId = `club_${userId}_comsoc`;
     const all = getItem<Club[]>(STORAGE_KEYS.CLUBS, []);
-    return all.filter(c => c.userId === userId);
+    const cleaned = all.filter(c => !(c.userId === userId && c.id === legacyDemoClubId));
+
+    if (cleaned.length !== all.length) {
+      setItem(STORAGE_KEYS.CLUBS, cleaned);
+      const reunions = getItem<ReunionClub[]>(STORAGE_KEYS.REUNIONS_CLUB, []);
+      setItem(STORAGE_KEYS.REUNIONS_CLUB, reunions.filter(r => !(r.userId === userId && r.clubId === legacyDemoClubId)));
+      const taches = getItem<TacheClub[]>(STORAGE_KEYS.TACHES_CLUB, []);
+      setItem(STORAGE_KEYS.TACHES_CLUB, taches.filter(t => !(t.userId === userId && t.clubId === legacyDemoClubId)));
+      const comptesRendus = getItem<CompteRendu[]>(STORAGE_KEYS.COMPTES_RENDUS, []);
+      setItem(STORAGE_KEYS.COMPTES_RENDUS, comptesRendus.filter(cr => !(cr.userId === userId && cr.clubId === legacyDemoClubId)));
+      const contacts = getItem<ContactClub[]>(STORAGE_KEYS.CONTACTS_CLUB, []);
+      setItem(STORAGE_KEYS.CONTACTS_CLUB, contacts.filter(c => !(c.userId === userId && c.clubId === legacyDemoClubId)));
+    }
+
+    return cleaned.filter(c => c.userId === userId);
   }
 
   async getById(id: string, userId: string): Promise<Club | undefined> {
@@ -1226,7 +1174,19 @@ export class ClubRepository implements IClubRepository {
 
   async delete(id: string, userId: string): Promise<void> {
     const all = getItem<Club[]>(STORAGE_KEYS.CLUBS, []);
+    const target = all.find(c => c.id === id && c.userId === userId);
     setItem(STORAGE_KEYS.CLUBS, all.filter(c => !(c.id === id && c.userId === userId)));
+
+    if (!target) return;
+
+    const reunions = getItem<ReunionClub[]>(STORAGE_KEYS.REUNIONS_CLUB, []);
+    setItem(STORAGE_KEYS.REUNIONS_CLUB, reunions.filter(r => !(r.userId === userId && r.clubId === id)));
+    const taches = getItem<TacheClub[]>(STORAGE_KEYS.TACHES_CLUB, []);
+    setItem(STORAGE_KEYS.TACHES_CLUB, taches.filter(t => !(t.userId === userId && t.clubId === id)));
+    const comptesRendus = getItem<CompteRendu[]>(STORAGE_KEYS.COMPTES_RENDUS, []);
+    setItem(STORAGE_KEYS.COMPTES_RENDUS, comptesRendus.filter(cr => !(cr.userId === userId && cr.clubId === id)));
+    const contacts = getItem<ContactClub[]>(STORAGE_KEYS.CONTACTS_CLUB, []);
+    setItem(STORAGE_KEYS.CONTACTS_CLUB, contacts.filter(c => !(c.userId === userId && c.clubId === id)));
   }
 
   // Reunions

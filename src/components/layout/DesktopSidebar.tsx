@@ -17,6 +17,7 @@ import { FR } from '@/i18n/fr';
 import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { AppLogo } from '@/components/ui/AppLogo';
 
 export const DesktopSidebar: React.FC = () => {
   const { currentUser, logout } = useAuth();
@@ -27,9 +28,9 @@ export const DesktopSidebar: React.FC = () => {
     { to: '/', label: FR.nav.aujourdhui, icon: Sun },
     { to: '/etudes', label: FR.nav.etudes, icon: BookOpen },
     { to: '/calendrier', label: FR.nav.calendrier, icon: Calendar },
-    { to: '/clubs', label: FR.nav.clubs, icon: Users, badge: 'Phase 2' },
-    { to: '/revisions', label: FR.nav.revisions, icon: BookmarkCheck, badge: 'Phase 2' },
-    { to: '/journal', label: FR.nav.journal, icon: BookMarked, badge: 'Phase 3' },
+    { to: '/clubs', label: FR.nav.clubs, icon: Users },
+    { to: '/revisions', label: FR.nav.revisions, icon: BookmarkCheck },
+    { to: '/journal', label: FR.nav.journal, icon: BookMarked, badge: 'Bientôt' },
   ];
 
   return (
@@ -41,18 +42,8 @@ export const DesktopSidebar: React.FC = () => {
         className="flex flex-col h-full border-r border-[#E5E7EB] dark:border-[#262B35] bg-white dark:bg-[#131721] shadow-sm dark:shadow-[var(--elizo-shadow)] transition-colors duration-300"
       >
         {/* Brand logo header */}
-        <div className="flex items-center px-6 h-18 py-5 border-b border-[#E5E7EB] dark:border-[#262B35]">
-          <div className="w-10 h-10 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center font-bold text-lg shadow-sm flex-shrink-0 mr-3">
-            E
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-[#111827] dark:text-[#F3F4F6] tracking-tight leading-none">
-              {APP_CONFIG.name}
-            </h1>
-            <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] mt-1 font-medium">
-              {APP_CONFIG.baseline}
-            </p>
-          </div>
+        <div className="flex items-center px-5 h-[68px] border-b border-[#E5E7EB] dark:border-[#262B35] flex-shrink-0">
+          <AppLogo size={36} showName />
         </div>
 
         {/* Navigation links */}
@@ -156,19 +147,21 @@ export const DesktopSidebar: React.FC = () => {
           {/* User details and Logout */}
           {currentUser && (
             <div className="flex items-center justify-between px-3.5 py-2">
-              <div className="truncate pr-2">
-                <p className="text-xs font-semibold text-[#111827] dark:text-[#F3F4F6] truncate">
-                  {currentUser.nom}
-                </p>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] truncate">
-                  {currentUser.email}
-                </p>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                  {currentUser.nom?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="truncate">
+                  <p className="text-xs font-semibold text-[#111827] dark:text-[#F3F4F6] truncate">
+                    {currentUser.nom}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={logout}
                 title={FR.nav.deconnexion}
-                className="p-1.5 rounded-[var(--elizo-radius-btn)] text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-200"
+                className="p-1.5 rounded-[var(--elizo-radius-btn)] text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-200 flex-shrink-0"
               >
                 <LogOut className="w-4 h-4" />
               </button>

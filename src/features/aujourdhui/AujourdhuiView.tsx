@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { FR } from '@/i18n/fr';
@@ -60,6 +61,8 @@ export const AujourdhuiView: React.FC<AujourdhuiViewProps> = ({
     evenements,
     indisponibilites,
     settings,
+    clubs,
+    tachesClub,
     toggleDevoirRendu,
     getPresenceForSeance,
     currentWeekMonday,
@@ -137,6 +140,16 @@ export const AujourdhuiView: React.FC<AujourdhuiViewProps> = ({
   );
 
   const upcomingDevoirs = devoirs.filter(d => d.statut !== 'rendu');
+
+  const openClubTasks = tachesClub
+    .filter(t => t.statut === 'ouverte')
+    .sort((a, b) => {
+      if (!a.echeance && !b.echeance) return 0;
+      if (!a.echeance) return 1;
+      if (!b.echeance) return -1;
+      return new Date(a.echeance).getTime() - new Date(b.echeance).getTime();
+    })
+    .slice(0, 3);
 
   const nextWeekMonday = shiftWeek(currentWeekMonday, 1);
   const nextWeekHasSessions = allSeances.some(s => {
@@ -230,13 +243,13 @@ export const AujourdhuiView: React.FC<AujourdhuiViewProps> = ({
             onClick={action.onClick}
             className={twMerge(
               clsx(
-                "flex items-center justify-center p-3 rounded-xl bg-white dark:bg-[#161922] border border-[#E5E7EB] dark:border-[#262B35] shadow-sm text-[#111827] dark:text-[#F3F4F6] hover:border-transparent transition-all duration-200 ease-in-out active:scale-95",
+                "flex items-center justify-center gap-2 py-3 px-2 rounded-xl bg-white dark:bg-[#161922] border border-[#E5E7EB] dark:border-[#262B35] shadow-sm text-[#111827] dark:text-[#F3F4F6] transition-all duration-150 ease-in-out active:scale-95 min-h-[48px]",
                 action.color
               )
             )}
           >
             {action.icon}
-            <span className="ml-1.5 text-[11px] font-semibold">
+            <span className="text-[11px] font-semibold leading-tight">
               {action.label}
             </span>
           </button>
@@ -371,8 +384,8 @@ export const AujourdhuiView: React.FC<AujourdhuiViewProps> = ({
                       <p className="text-sm font-semibold text-[#111827] dark:text-[#F3F4F6] truncate">
                         {d.titre}
                       </p>
-                      <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                        Échéance : {d.echeance.replace('T', ' à ')}
+                    <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                        Échéance : {formatDateFr(d.echeance.replace('T', ' '), 'd MMM yyyy à HH:mm')}
                       </p>
                     </div>
                   </div>
@@ -414,15 +427,15 @@ export const AujourdhuiView: React.FC<AujourdhuiViewProps> = ({
                   className="flex items-center justify-between p-3.5 rounded-xl bg-white dark:bg-[#161922] border border-[#E5E7EB] dark:border-[#262B35] shadow-sm"
                 >
                   <div>
-                    <Badge variant="danger" size="sm" className="mb-2">
+                    <Badge variant="danger" size="sm" className="mb-1.5">
                       {ex.type} · {ex.dureeMin} min
                     </Badge>
                     <h4 className="text-sm font-bold text-[#111827] dark:text-[#F3F4F6]">
-                      {ex.date} à {ex.heure}
+                      {formatCapitalizedDateFr(ex.date, 'd MMMM yyyy')} à {ex.heure}
                     </h4>
                     {ex.salle && (
-                      <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                        Salle : {ex.salle}
+                      <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+                        Salle : {ex.salle}
                       </p>
                     )}
                   </div>
@@ -443,19 +456,63 @@ export const AujourdhuiView: React.FC<AujourdhuiViewProps> = ({
           )}
         </div>
 
-        {/* 6. Tâches de club (preview Phase 2) */}
+        {/* 6. Tâches de club */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#9CA3AF] flex items-center">
               <Users className="w-3.5 h-3.5 mr-1.5 text-purple-500" />
               {FR.dashboard.tachesClub}
             </h2>
-            <Badge variant="outline" size="sm">Phase 2</Badge>
+            <Link
+              to="/clubs"
+              className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline flex items-center"
+            >
+              {FR.dashboard.voirClubs}
+              <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+            </Link>
           </div>
-          <div className="p-3.5 rounded-xl bg-[#F7F8FA] dark:bg-[#0E1014]/30 border border-[#E5E7EB] dark:border-[#262B35] text-xs text-[#6B7280] dark:text-[#9CA3AF] flex items-center justify-between">
-            <span>Club Com Soc · Réunion Hebdomadaire le vendredi</span>
-            <span className="font-semibold text-purple-600 dark:text-purple-400">Membre</span>
-          </div>
+
+          {openClubTasks.length > 0 ? (
+            <div className="space-y-2">
+              {openClubTasks.map(tache => {
+                const club = clubs.find(c => c.id === tache.clubId);
+                const isLate = tache.echeance && new Date(tache.echeance) < new Date();
+
+                return (
+                  <Link
+                    key={tache.id}
+                    to={`/clubs/${tache.clubId}`}
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-white dark:bg-[#161922] border border-[#E5E7EB] dark:border-[#262B35] shadow-sm transition-colors hover:bg-[#F7F8FA] dark:hover:bg-[#1B1F27]"
+                  >
+                    <div className="flex items-center min-w-0">
+                      <span
+                        className="w-2 h-2 rounded-full mr-2.5 flex-shrink-0"
+                        style={{ backgroundColor: club?.couleur || '#8B5CF6' }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#111827] dark:text-[#F3F4F6] truncate">
+                          {tache.titre}
+                        </p>
+                        <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] truncate">
+                          {club?.nom}
+                          {tache.echeance && ` · ${formatDateFr(tache.echeance, 'd MMM · HH:mm')}`}
+                        </p>
+                      </div>
+                    </div>
+                    {isLate && (
+                      <Badge variant="danger" size="sm" className="flex-shrink-0 ml-2">
+                        {FR.clubs.taches.enRetard}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-xl bg-[#F7F8FA] dark:bg-[#0E1014]/30 border border-[#E5E7EB] dark:border-[#262B35] text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+              {FR.dashboard.aucuneTacheClub}
+            </div>
+          )}
         </div>
 
         {/* 7. Créneaux libres */}

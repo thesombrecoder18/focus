@@ -19,7 +19,7 @@
 ```bash
 npm install
 npm run dev
-npm run build
+npm run build   # tsc + vite — doit passer sans erreur avant tout commit
 npm run preview
 ```
 
@@ -27,20 +27,33 @@ npm run preview
 ```
 src/
   components/       Composants UI partagés, navigation (TabBar, Sidebar, Sheet), layout
+    ui/AppLogo.tsx  Logo SVG inline (size, showName props) — utiliser partout
   config/           Configuration globale (nom, baseline, fuseau)
-  features/         Modules métier : auth, aujourdhui, etudes, calendrier, import, settings
-  i18n/             Fichier unique de tous les textes français
+  features/         Modules métier : auth, aujourdhui, etudes, calendrier, import, settings,
+                    clubs, revisions  ← tous livrés
+  i18n/             Fichier unique de tous les textes français (fr.ts)
   lib/              Utilitaires dates (Africa/Dakar), calculs créneaux, excel parser
   repositories/     Interfaces et implémentations de persistance isolée par userId
   types/            Modèles de données TypeScript stricts
+public/
+  favicon.svg       Logo Elizo Focus vectoriel (E + anneau de focus)
+  logo.svg          Identique — utilisé pour apple-touch-icon
+  manifest.webmanifest
+  sw.js
 ```
 
 ## Règles du projet
 - Mobile first absolu : chaque vue validée à 360 px, pas de défilement horizontal.
 - Fuseau horaire : Africa/Dakar (UTC+0).
 - Tous les textes dans `src/i18n/fr.ts` (aucun texte codé en dur dans les composants).
-- Sécurité : validation stricte, aucune macro/formule exécutée à l'import, secrets hors client.
+- Sécurité : validation stricte, aucune macro/formule exécutée à l'import, secrets hors client, code d'invitation jamais affiché dans l'UI publique.
+- Touch targets : min 44×44 px (WCAG 2.2). Classe utilitaire `.touch-target` disponible dans `index.css`.
+- Inputs : `font-size: max(16px, 1em)` imposé via `@supports (-webkit-touch-callout)` → pas de zoom iOS.
+- `AppLogo` : ne jamais recréer un "E" inline, toujours importer `AppLogo` de `@/components/ui/AppLogo`.
 - Pas de commit/push sans accord explicite. Commits en français (`type: description`).
+
+## Bloquants actuels
+- `icon-192.png` et `icon-512.png` manquants → PWA install incomplète (générer avant déploiement Vercel)
 
 ## Docs utiles
 - `Cahier des charges — OS LIFE.md` : spécification détaillée complète de l'application.

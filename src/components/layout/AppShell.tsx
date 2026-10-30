@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { MobileTabBar } from './MobileTabBar';
 import { DesktopSidebar } from './DesktopSidebar';
 import { FloatingActionButton } from './FloatingActionButton';
@@ -9,9 +9,11 @@ import { AddEvenementModal } from '@/components/forms/AddEvenementModal';
 import { APP_CONFIG } from '@/config/app';
 import { FR } from '@/i18n/fr';
 import { useTheme } from '@/context/ThemeContext';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { Sun, Moon, Upload } from 'lucide-react';
 
 export const AppShell: React.FC = () => {
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const { theme, toggleTheme, resolvedTheme } = useTheme();
 
@@ -31,14 +33,7 @@ export const AppShell: React.FC = () => {
       <div className="relative z-10 flex-1 flex flex-col lg:pl-64 min-w-0">
         {/* Mobile Top Header */}
         <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-white/80 dark:bg-[#131721]/80 backdrop-blur-md border-b border-[#E5E7EB] dark:border-[#262B35]">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-              E
-            </div>
-            <span className="font-semibold text-base tracking-tight text-[#111827] dark:text-[#F3F4F6]">
-              {APP_CONFIG.shortName}
-            </span>
-          </div>
+          <AppLogo size={32} showName />
 
           <div className="flex items-center space-x-1">
             <button
@@ -67,7 +62,7 @@ export const AppShell: React.FC = () => {
               onOpenImport: () => setIsImportOpen(true),
               onOpenDevoir: () => setIsDevoirOpen(true),
               onOpenEvenement: () => setIsEvenementOpen(true),
-              onOpenRevision: () => alert('Le module Révisions arrive en Phase 2 !'),
+              onOpenRevision: () => navigate('/revisions'),
             }}
           />
         </main>
@@ -81,7 +76,7 @@ export const AppShell: React.FC = () => {
         onOpenImport={() => setIsImportOpen(true)}
         onOpenDevoir={() => setIsDevoirOpen(true)}
         onOpenEvenement={() => setIsEvenementOpen(true)}
-        onOpenRevision={() => alert('Le module Révisions arrive en Phase 2 !')}
+        onOpenRevision={() => navigate('/revisions')}
       />
 
       {/* Modals available everywhere */}

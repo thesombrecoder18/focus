@@ -1,4 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="24" fill="#4F46E5"/>
-  <path d="M30 28H70V38H42V46H66V56H42V64H70V74H30V28Z" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5B52EF"/>
+      <stop offset="100%" stop-color="#3730C8"/>
+    </linearGradient>
+  </defs>
+  <!-- Fond arrondi -->
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <!-- Spine verticale gauche -->
+  <rect x="124" y="136" width="52" height="240" rx="8" fill="white"/>
+  <!-- Barre haute -->
+  <rect x="124" y="136" width="248" height="52" rx="8" fill="white"/>
+  <!-- Barre basse -->
+  <rect x="124" y="324" width="248" height="52" rx="8" fill="white"/>
+  <!-- Barre médiane courte -->
+  <rect x="124" y="230" width="152" height="52" rx="8" fill="white"/>
+  <!-- Anneau de focus -->
+  <circle cx="340" cy="256" r="42" stroke="white" stroke-width="20" fill="none"/>
+  <!-- Point focal -->
+  <circle cx="340" cy="256" r="11" fill="white"/>
 </svg>

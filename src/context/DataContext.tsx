@@ -372,15 +372,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let totalWeight = 0;
 
     matieres.forEach(m => {
-      const avg = matiereAverages[m.id];
-      if (avg > 0) {
+      const hasEvaluations = evaluations.some(e => e.matiereId === m.id);
+      if (hasEvaluations) {
+        const avg = matiereAverages[m.id] ?? 0;
         totalScore += avg * (m.coefficient || 1);
         totalWeight += (m.coefficient || 1);
       }
     });
 
     return totalWeight > 0 ? Math.round((totalScore / totalWeight) * 100) / 100 : 0;
-  }, [matieres, matiereAverages]);
+  }, [matieres, matiereAverages, evaluations]);
 
   // Phase 2: Total revision minutes per matiere
   const totalRevisionMinutesPerMatiere = React.useMemo(() => {

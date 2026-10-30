@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
+import { FR } from '@/i18n/fr';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { Plus, GraduationCap, Trash2, Sparkles } from 'lucide-react';
+import { Plus, GraduationCap, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const NotesTab: React.FC = () => {
@@ -19,6 +20,7 @@ export const NotesTab: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetMatiereId, setTargetMatiereId] = useState<string>(matieres[0]?.id || '');
+  const [evalToDelete, setEvalToDelete] = useState<string | null>(null);
 
   // Form states
   const [intitule, setIntitule] = useState('');
@@ -27,7 +29,10 @@ export const NotesTab: React.FC = () => {
   const [coefficient, setCoefficient] = useState<number>(1);
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
 
+  const hasAnyEvaluation = evaluations.length > 0;
+
   const openAddForMatiere = (mId: string) => {
+    if (!mId) return;
     setTargetMatiereId(mId);
     setIntitule('');
     setNote(15);
@@ -53,13 +58,18 @@ export const NotesTab: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Mention calculation
+  const handleDeleteConfirmed = async () => {
+    if (!evalToDelete) return;
+    await deleteEvaluation(evalToDelete);
+    setEvalToDelete(null);
+  };
+
   const getMention = (avg: number) => {
-    if (avg >= 16) return { label: 'Très Bien', color: 'text-emerald-600 dark:text-emerald-400' };
-    if (avg >= 14) return { label: 'Bien', color: 'text-indigo-600 dark:text-indigo-400' };
-    if (avg >= 12) return { label: 'Assez Bien', color: 'text-cyan-600 dark:text-cyan-400' };
-    if (avg >= 10) return { label: 'Passable', color: 'text-amber-600 dark:text-amber-400' };
-    return { label: 'Ajourné', color: 'text-red-600 dark:text-red-400' };
+    if (avg >= 16) return { label: FR.notes.mentions.tresBien, color: 'text-emerald-600 dark:text-emerald-400' };
+    if (avg >= 14) return { label: FR.notes.mentions.bien, color: 'text-indigo-600 dark:text-indigo-400' };
+    if (avg >= 12) return { label: FR.notes.mentions.assezBien, color: 'text-cyan-600 dark:text-cyan-400' };
+    if (avg >= 10) return { label: FR.notes.mentions.passable, color: 'text-amber-600 dark:text-amber-400' };
+    return { label: FR.notes.mentions.ajourne, color: 'text-red-600 dark:text-red-400' };
   };
 
   const mention = getMention(generalAverage);
@@ -74,16 +84,16 @@ export const NotesTab: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
-              Moyenne générale pondérée
+              {FR.notes.moyenneGenerale}
             </span>
             <div className="flex items-baseline space-x-2 mt-0.5">
               <span className="text-3xl font-extrabold text-[#111827] dark:text-[#F3F4F6] font-mono">
-                {generalAverage > 0 ? generalAverage.toFixed(2) : '—'}
+                {hasAnyEvaluation ? generalAverage.toFixed(2) : '—'}
               </span>
-              <span className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">/ 20</span>
-              {generalAverage > 0 && (
+              <span className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">{FR.notes.sur20}</span>
+              {hasAnyEvaluation && (
                 <span className={clsx("text-xs font-bold px-2 py-0.5 rounded-full bg-white/80 dark:bg-black/40 ml-2", mention.color)}>
-                  Mention {mention.label}
+                  {FR.notes.mention} {mention.label}
                 </span>
               )}
             </div>
@@ -94,17 +104,25 @@ export const NotesTab: React.FC = () => {
           size="sm"
           icon={<Plus className="w-4 h-4" />}
           onClick={() => openAddForMatiere(matieres[0]?.id || '')}
+          disabled={matieres.length === 0}
           className="self-start sm:self-auto"
         >
-          Ajouter une note
+          {FR.notes.ajouterNote}
         </Button>
       </div>
+
+      {matieres.length === 0 && (
+        <Card className="text-center py-8">
+          <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">{FR.notes.aucuneMatiere}</p>
+        </Card>
+      )}
 
       {/* Matieres list with grades */}
       <div className="space-y-3">
         {matieres.map(m => {
           const matEvals = evaluations.filter(e => e.matiereId === m.id);
-          const matAvg = matiereAverages[m.id] || 0;
+          const matAvg = matiereAverages[m.id] ?? 0;
+          const hasEvals = matEvals.length > 0;
 
           return (
             <Card key={m.id} colorBar={m.couleur} className="space-y-3">
@@ -115,7 +133,7 @@ export const NotesTab: React.FC = () => {
                       {m.intitule}
                     </h4>
                     <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                      Coef. {m.coefficient}
+                      {FR.notes.coefficient} {m.coefficient}
                     </span>
                   </div>
                 </div>
@@ -123,9 +141,9 @@ export const NotesTab: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
                     <span className="text-base font-bold text-[#111827] dark:text-[#F3F4F6] font-mono">
-                      {matAvg > 0 ? matAvg.toFixed(2) : '—'}
+                      {hasEvals ? matAvg.toFixed(2) : '—'}
                     </span>
-                    <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]"> / 20</span>
+                    <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]"> {FR.notes.sur20}</span>
                   </div>
 
                   <Button
@@ -133,7 +151,7 @@ export const NotesTab: React.FC = () => {
                     variant="ghost"
                     onClick={() => openAddForMatiere(m.id)}
                     className="p-1.5 h-8 w-8"
-                    title="Ajouter une note pour cette matière"
+                    title={FR.notes.ajouterNoteMatiere}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -141,7 +159,7 @@ export const NotesTab: React.FC = () => {
               </div>
 
               {/* Evaluations list for this matiere */}
-              {matEvals.length > 0 ? (
+              {hasEvals ? (
                 <div className="space-y-1.5 border-t border-[#E5E7EB]/50 dark:border-[#262B35]/50 pt-2">
                   {matEvals.map(ev => {
                     const noteSur20 = ev.bareme > 0 ? (ev.note / ev.bareme) * 20 : ev.note;
@@ -156,7 +174,7 @@ export const NotesTab: React.FC = () => {
                             {ev.intitule}
                           </p>
                           <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">
-                            {ev.date} · Coef. {ev.coefficient}
+                            {ev.date} · {FR.notes.coefficient} {ev.coefficient}
                           </p>
                         </div>
 
@@ -172,8 +190,9 @@ export const NotesTab: React.FC = () => {
 
                           <button
                             type="button"
-                            onClick={() => deleteEvaluation(ev.id)}
+                            onClick={() => setEvalToDelete(ev.id)}
                             className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-btn transition-colors"
+                            title={FR.notes.supprimerNote}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -184,7 +203,7 @@ export const NotesTab: React.FC = () => {
                 </div>
               ) : (
                 <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] italic pt-1">
-                  Aucune note saisie pour cette matière.
+                  {FR.notes.aucuneNoteMatiere}
                 </p>
               )}
             </Card>
@@ -192,27 +211,16 @@ export const NotesTab: React.FC = () => {
         })}
       </div>
 
-      {/* Target Grade Simulation Tool */}
-      <div className="p-4 rounded-card bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center">
-          <Sparkles className="w-4 h-4 mr-1.5" />
-          Simulation de mention
-        </h4>
-        <p className="text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed">
-          Pour valider le semestre avec mention Bien (≥ 14.00), il te reste à maintenir un bon niveau sur les examens finals et les projets à fort coefficient (ex. Cybercriminalité : Coef. 3).
-        </p>
-      </div>
-
       {/* Add Evaluation BottomSheet */}
       <BottomSheet
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Ajouter une note d'évaluation"
+        title={FR.notes.formulaire.titre}
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div className="flex flex-col space-y-1.5">
             <label className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] uppercase">
-              Matière
+              {FR.notes.formulaire.matiere}
             </label>
             <select
               value={targetMatiereId}
@@ -221,15 +229,15 @@ export const NotesTab: React.FC = () => {
             >
               {matieres.map(m => (
                 <option key={m.id} value={m.id}>
-                  {m.intitule} (Coef. {m.coefficient})
+                  {m.intitule} ({FR.notes.coefficient} {m.coefficient})
                 </option>
               ))}
             </select>
           </div>
 
           <Input
-            label="Intitulé de l'évaluation"
-            placeholder="Ex. Contrôle continu 2, Devoir sur table, Projet..."
+            label={FR.notes.formulaire.intitule}
+            placeholder={FR.notes.formulaire.intitulePlaceholder}
             value={intitule}
             onChange={e => setIntitule(e.target.value)}
             required
@@ -238,7 +246,7 @@ export const NotesTab: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-2">
             <Input
-              label="Note obtenue"
+              label={FR.notes.formulaire.noteObtenue}
               type="number"
               step="0.25"
               min="0"
@@ -248,7 +256,7 @@ export const NotesTab: React.FC = () => {
               required
             />
             <Input
-              label="Barème total"
+              label={FR.notes.formulaire.bareme}
               type="number"
               min="1"
               value={bareme}
@@ -259,7 +267,7 @@ export const NotesTab: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-2">
             <Input
-              label="Coefficient de l'évaluation"
+              label={FR.notes.formulaire.coefficient}
               type="number"
               min="0.5"
               step="0.5"
@@ -268,7 +276,7 @@ export const NotesTab: React.FC = () => {
               required
             />
             <Input
-              label="Date"
+              label={FR.notes.formulaire.date}
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
@@ -278,10 +286,31 @@ export const NotesTab: React.FC = () => {
 
           <div className="pt-2">
             <Button type="submit" fullWidth size="lg">
-              Enregistrer la note
+              {FR.notes.formulaire.enregistrer}
             </Button>
           </div>
         </form>
+      </BottomSheet>
+
+      {/* Delete confirmation */}
+      <BottomSheet
+        isOpen={evalToDelete !== null}
+        onClose={() => setEvalToDelete(null)}
+        title={FR.notes.confirmerSuppressionTitre}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+            {FR.notes.confirmerSuppressionMessage}
+          </p>
+          <div className="flex space-x-2">
+            <Button type="button" variant="outline" fullWidth onClick={() => setEvalToDelete(null)}>
+              {FR.actions.annuler}
+            </Button>
+            <Button type="button" fullWidth onClick={handleDeleteConfirmed}>
+              {FR.actions.supprimer}
+            </Button>
+          </div>
+        </div>
       </BottomSheet>
     </div>
   );

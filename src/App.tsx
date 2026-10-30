@@ -8,8 +8,9 @@ import { AuthScreen } from '@/features/auth/AuthScreen';
 import { AujourdhuiView } from '@/features/aujourdhui/AujourdhuiView';
 import { EtudesView } from '@/features/etudes/EtudesView';
 import { CalendrierView } from '@/features/calendrier/CalendrierView';
-import { ClubsPlaceholder } from '@/features/clubs/ClubsPlaceholder';
-import { RevisionsPlaceholder } from '@/features/revisions/RevisionsPlaceholder';
+import { ClubsView } from '@/features/clubs/ClubsView';
+import { ClubDetailView } from '@/features/clubs/ClubDetailView';
+import { RevisionsView } from '@/features/revisions/RevisionsView';
 import { JournalPlaceholder } from '@/features/journal/JournalPlaceholder';
 import { SettingsView } from '@/features/settings/SettingsView';
 
@@ -69,8 +70,9 @@ export const App: React.FC = () => {
               <Route index element={<AujourdhuiRoute />} />
               <Route path="etudes" element={<EtudesRoute />} />
               <Route path="calendrier" element={<CalendrierView />} />
-              <Route path="clubs" element={<ClubsPlaceholder />} />
-              <Route path="revisions" element={<RevisionsPlaceholder />} />
+              <Route path="clubs" element={<ClubsView />} />
+              <Route path="clubs/:clubId" element={<ClubDetailView />} />
+              <Route path="revisions" element={<RevisionsView />} />
               <Route path="journal" element={<JournalPlaceholder />} />
               <Route path="parametres" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />
